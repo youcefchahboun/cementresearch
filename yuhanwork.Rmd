@@ -1,0 +1,38 @@
+---
+ytitle: "yuhanwork"
+output: html_document
+date: "2023-07-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readxl)
+
+```
+
+
+
+```{r}
+rawdata <- read_excel("data/USGS_Aggregates_Data-1971-2021.xlsx", sheet = "Complete_1971_2021")
+
+```
+
+```{r}
+rawdata |>
+  summarise(project_total = n(), .by = Region) |>
+  ggplot(aes(x = Region, y = project_total, fill = Region)) + 
+  geom_col()
+
+
+rawdata |>
+  summarise(project_total = n(), .by = Division) |>
+  ggplot(aes(x = Division, y = project_total)) + 
+  geom_col()
+
+```
+
+Goal: 
+
+X axis: South, West, East, Middle East.....
+Y axis: Total number of construction/projects in that region for all years
