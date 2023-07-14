@@ -1,0 +1,26 @@
+---
+title: "davis_cement_project2.R"
+output: html_document
+date: "2023-07-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readxl)
+
+```
+
+## Davis is Bald
+
+```{r}
+rawdata <- read_excel("data/USGS_Aggregates_Data-1971-2021.xlsx", sheet = "Complete_1971_2021")
+
+```
+
+```{r}
+summary(rawdata)
+
+```
+
+
