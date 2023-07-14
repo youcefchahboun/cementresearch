@@ -19,8 +19,17 @@ rawdata <- read_excel("data/USGS_Aggregates_Data-1971-2021.xlsx", sheet = "Compl
 ```
 
 ```{r}
-summary(rawdata)
+rawdata |> 
+  summarise(project_total = n(), .by = Region) |> 
+  ggplot(aes(x = Region, y = project_total, fill = Region)) + 
+  geom_col()
 
+```
+```{r}
+rawdata |>
+  filter(State == "Massachusetts", Commodity == "Stone, crushed") |>
+  ggplot(aes(x=Year,y=`Total Value`)) +
+  geom_point()
 ```
 
 
