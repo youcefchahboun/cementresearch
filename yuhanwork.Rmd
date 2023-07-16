@@ -37,6 +37,32 @@ Goal:
 X axis: South, West, East, Middle East.....
 Y axis: Total number of construction/projects in that region for all years
 
+# Correlation Analysis
+
+```{r}
+datacpi <- read_csv("data/cpi.csv") |>
+   pivot_longer(cols = `1960`:`2022`, 
+               names_to = "years",
+               values_to = "values") |>
+  select(c(`Country Name`, years, values)) |>
+  filter(`Country Name` == "United States")
+
+dataunemploy <- read_csv("data/unemploy.csv") |>
+   pivot_longer(cols = `1960`:`2022`, 
+               names_to = "years",
+               values_to = "values") |>
+  select(c(`Country Name`, years, values)) |>
+  filter(`Country Name` == "United States") |>
+  drop_na()
+
+datagdp <- read_csv("data/gdpall.csv") |>
+   pivot_longer(cols = `1960`:`2022`, 
+               names_to = "years",
+               values_to = "values") |>
+  select(c(`Country Name`, years, values)) |>
+  filter(`Country Name` == "United States") |>
+  drop_na()
 
 
+```
 
