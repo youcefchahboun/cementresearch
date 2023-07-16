@@ -8,7 +8,10 @@ date: "2023-07-14"
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(readxl)
-
+library("Hmisc")
+library("PerformanceAnalytics")
+library(rstanarm)
+library(gam)
 ```
 
 
@@ -40,29 +43,88 @@ Y axis: Total number of construction/projects in that region for all years
 # Correlation Analysis
 
 ```{r}
+
+#Import Datasets + Innitial Manipulation
+
 datacpi <- read_csv("data/cpi.csv") |>
    pivot_longer(cols = `1960`:`2022`, 
                names_to = "years",
-               values_to = "values") |>
-  select(c(`Country Name`, years, values)) |>
-  filter(`Country Name` == "United States")
+               values_to = "cpi") |>
+  select(c(`Country Name`, years, cpi)) |>
+  filter(`Country Name` == "United States") |>
+  filter(years >= 1991)
 
 dataunemploy <- read_csv("data/unemploy.csv") |>
    pivot_longer(cols = `1960`:`2022`, 
                names_to = "years",
-               values_to = "values") |>
-  select(c(`Country Name`, years, values)) |>
+               values_to = "unemploy") |>
+  select(c(`Country Name`, years, unemploy)) |>
   filter(`Country Name` == "United States") |>
-  drop_na()
+  drop_na() |>
+  filter(years >= 1991)
 
 datagdp <- read_csv("data/gdpall.csv") |>
    pivot_longer(cols = `1960`:`2022`, 
                names_to = "years",
-               values_to = "values") |>
-  select(c(`Country Name`, years, values)) |>
+               values_to = "gdp") |>
+  select(c(`Country Name`, years, gdp)) |>
   filter(`Country Name` == "United States") |>
-  drop_na()
+  drop_na() |>
+  filter(years >= 1991)
+
+dataoil <- read_csv("data/oil.csv") |>
+  filter(!DCOILWTICO == ".") |>
+  mutate(oilprice = as.double(DCOILWTICO)) |>
+  mutate(year = as.double(str_sub(DATE, 0,4))) |>
+  summarise(oilprice = mean(oilprice), .by = year) |>
+  filter(year >= 1991 & year < 2023)
+
+datacement <- read_csv("data/cement.csv") |>
+  filter(!PCU32733132733106 == ".") |>
+  mutate(cementprice = as.double(PCU32733132733106)) |>
+  mutate(year = as.double(str_sub(DATE, 0,4))) |>
+  summarise(cementprice = mean(cementprice), .by = year) |>
+  filter(year >= 1991 & year < 2023)
 
 
 ```
+
+
+```{r}
+
+combinedata <- bind_cols(c(datacpi, dataunemploy, datagdp, dataoil, datacement)) |>
+  select(`Country Name...1`, `years...2`, cpi, unemploy, gdp, oilprice, cementprice) |>
+  mutate(name = `Country Name...1`, year = `years...2`) |>
+  select(name, year, cpi, unemploy, gdp, oilprice, cementprice)
+
+
+
+
+cordata <- combinedata |>
+  mutate(year = as.double(year)) |>
+  mutate(gdp = log10(gdp)) |>
+  select(cpi, unemploy, gdp, oilprice, cementprice) 
+
+cormatrix <- rcorr(as.matrix(cordata))
+
+cormatrix$r
+```
+```{r}
+chart.Correlation(cordata, histogram=FALSE, pch="+")
+```
+
+```{r}
+mod_gam1 <- gam(gdp ~ s(cpi) + s(unemploy) + s(oilprice), family = gaussian, data = cordata, iter = 2000)
+summary(mod_gam1)
+
+
+
+mod_lm1 <- lm(gdp ~ cpi + unemploy + oilprice + , data = cordata)
+
+summary(mod_lm1)
+```
+
+
+
+
 
