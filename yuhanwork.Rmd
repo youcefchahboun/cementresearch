@@ -119,7 +119,7 @@ summary(mod_gam1)
 
 
 
-mod_lm1 <- lm(gdp ~ cpi + unemploy + oilprice + , data = cordata)
+mod_lm1 <- lm(cementprice ~ cpi + unemploy + oilprice + gdp, data = cordata)
 
 summary(mod_lm1)
 ```
