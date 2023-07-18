@@ -102,15 +102,17 @@ combinedata <- bind_cols(c(datacpi, dataunemploy, datagdp, dataoil, datacement))
 
 cordata <- combinedata |>
   mutate(year = as.double(year)) |>
-  mutate(gdp = log10(gdp)) |>
   select(cpi, unemploy, gdp, oilprice, cementprice) 
 
 cormatrix <- rcorr(as.matrix(cordata))
 
 cormatrix$r
+
+
 ```
+
 ```{r}
-chart.Correlation(cordata, histogram=FALSE, pch="+")
+chart.Correlation(cordata, histogram=TRUE, pch="+")
 ```
 
 ```{r}
