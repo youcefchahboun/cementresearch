@@ -86,27 +86,31 @@ datacement <- read_csv("data/cement.csv") |>
   summarise(cementprice = mean(cementprice), .by = year) |>
   filter(year >= 1991 & year < 2023)
 
+popdata <- read.csv("data/POPTHM.csv") |>
+  filter(!POPTHM == ".") |>
+  mutate(population = as.double(POPTHM)) |>
+  mutate(year = as.double(str_sub(DATE, 0,4))) |>
+  summarise(population = mean(population), .by = year) |>
+  filter(year >= 1991 & year < 2023)
 
 ```
 
 
 ```{r}
 
-combinedata <- bind_cols(c(datacpi, dataunemploy, datagdp, dataoil, datacement)) |>
-  select(`Country Name...1`, `years...2`, cpi, unemploy, gdp, oilprice, cementprice) |>
+combinedata <- bind_cols(c(datacpi, dataunemploy, datagdp, dataoil, datacement, popdata)) |>
+  select(`Country Name...1`, `years...2`, cpi, unemploy, gdp, oilprice, cementprice, population) |>
   mutate(name = `Country Name...1`, year = `years...2`) |>
-  select(name, year, cpi, unemploy, gdp, oilprice, cementprice)
-
-
+  select(name, year, cpi, unemploy, gdp, oilprice, cementprice, population)
 
 
 cordata <- combinedata |>
   mutate(year = as.double(year)) |>
-  select(cpi, unemploy, gdp, oilprice, cementprice) 
+  select(cpi, unemploy, gdp, oilprice, cementprice, population) 
 
 cormatrix <- rcorr(as.matrix(cordata))
 
-cormatrix$P
+cormatrix$r
 
 
 ```
@@ -293,9 +297,9 @@ better_smooth <- function(data, mapping, ptcol, ptalpha=1, ptsize=1, linecol, ..
 ```
 
 
-```{r}
+```{r message=FALSE}
 p = GGally::ggpairs(
-  cordata[, c(1, 2:5)],
+  cordata[, c(1, 2:6)],
   lower = list(
     continuous = GGally::wrap(
       better_smooth,
@@ -317,5 +321,9 @@ p = GGally::ggpairs(
 
 p
 ```
+```
+
+```{r}
+
 ```
 
