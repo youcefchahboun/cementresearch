@@ -52,7 +52,7 @@ datacpi <- read_csv("data/cpi.csv") |>
                values_to = "cpi") |>
   select(c(`Country Name`, years, cpi)) |>
   filter(`Country Name` == "United States") |>
-  filter(years >= 1991)
+  filter(years >= 1998 & years < 2021)
 
 dataunemploy <- read_csv("data/unemploy.csv") |>
    pivot_longer(cols = `1960`:`2022`, 
@@ -61,7 +61,7 @@ dataunemploy <- read_csv("data/unemploy.csv") |>
   select(c(`Country Name`, years, unemploy)) |>
   filter(`Country Name` == "United States") |>
   drop_na() |>
-  filter(years >= 1991)
+  filter(years >= 1998 & years < 2021)
 
 datagdp <- read_csv("data/gdpall.csv") |>
    pivot_longer(cols = `1960`:`2022`, 
@@ -70,43 +70,63 @@ datagdp <- read_csv("data/gdpall.csv") |>
   select(c(`Country Name`, years, gdp)) |>
   filter(`Country Name` == "United States") |>
   drop_na() |>
-  filter(years >= 1991)
+  filter(years >= 1998 & years < 2021)
 
 dataoil <- read_csv("data/oil.csv") |>
   filter(!DCOILWTICO == ".") |>
   mutate(oilprice = as.double(DCOILWTICO)) |>
   mutate(year = as.double(str_sub(DATE, 0,4))) |>
   summarise(oilprice = mean(oilprice), .by = year) |>
-  filter(year >= 1991 & year < 2023)
+  filter(year >= 1998 & year < 2021)
 
 datacement <- read_csv("data/cement.csv") |>
   filter(!PCU32733132733106 == ".") |>
   mutate(cementprice = as.double(PCU32733132733106)) |>
   mutate(year = as.double(str_sub(DATE, 0,4))) |>
   summarise(cementprice = mean(cementprice), .by = year) |>
-  filter(year >= 1991 & year < 2023)
+  filter(year >= 1998 & year < 2021)
 
 popdata <- read.csv("data/POPTHM.csv") |>
   filter(!POPTHM == ".") |>
   mutate(population = as.double(POPTHM)) |>
   mutate(year = as.double(str_sub(DATE, 0,4))) |>
   summarise(population = mean(population), .by = year) |>
-  filter(year >= 1991 & year < 2023)
+  filter(year >= 1998 & year < 2021) 
+
+cementprod <- read.csv("data/IPG3273S.csv") |>
+  filter(!IPG3273S == ".") |>
+  mutate(concreteppi = as.double(IPG3273S)) |>
+  mutate(year = as.double(str_sub(DATE, 0,4))) |>
+  summarise(concreteppi = mean(concreteppi), .by = year) |>
+  filter(year >= 1998 & year < 2021) 
+
+cementclinker <- read.csv("data/cementclinker.csv") |>
+  mutate(Cement = as.double(str_remove(Cement, ","))) |>
+  mutate(Clinker = as.double(str_remove(Clinker, ","))) 
+
+combinedata <- bind_cols(c(datacpi, dataunemploy, datagdp, dataoil, 
+                           datacement, popdata, cementprod, cementclinker)) |>
+  mutate(name = `Country Name...1`, year = `years...2`) |>
+  select(name, year, cpi, unemploy, gdp, oilprice, 
+         cementprice, population, concreteppi, Cement, Clinker)
+
+
 
 ```
 
 
 ```{r}
 
-combinedata <- bind_cols(c(datacpi, dataunemploy, datagdp, dataoil, datacement, popdata)) |>
-  select(`Country Name...1`, `years...2`, cpi, unemploy, gdp, oilprice, cementprice, population) |>
-  mutate(name = `Country Name...1`, year = `years...2`) |>
-  select(name, year, cpi, unemploy, gdp, oilprice, cementprice, population)
-
 
 cordata <- combinedata |>
   mutate(year = as.double(year)) |>
-  select(cpi, unemploy, gdp, oilprice, cementprice, population) 
+  select(!c(name,year)) 
+
+cordata2 <- combinedata |>
+  mutate(year = as.double(year)) |>
+  mutate(unemploy = log10(unemploy), gdp = log10(gdp), oilprice = log10(oilprice), cementprice = log10(cementprice), population = log10(population), concreteppi = log10(concreteppi), Cement = log10(Cement),
+         Clinker = log10(Clinker)) |>
+  select(!c(name,year)) 
 
 cormatrix <- rcorr(as.matrix(cordata))
 
@@ -115,19 +135,33 @@ cormatrix$r
 
 ```
 
-```{r}
+```{r warning=FALSE}
 chart.Correlation(cordata, histogram=TRUE, pch="+")
+
+chart.Correlation(cordata2, histogram=TRUE, pch="+")
 ```
 
 ```{r}
-mod_gam1 <- gam(gdp ~ s(cpi) + s(unemploy) + s(oilprice), family = gaussian, data = cordata, iter = 2000)
+mod_gam1 <- gam(concreteppi ~ cpi + s(unemploy) + s(oilprice) + s(gdp) + s(population) + s(cementprice), data = cordata)
+
 summary(mod_gam1)
 
 
 
-mod_lm1 <- lm(cementprice ~ cpi + unemploy + oilprice + gdp, data = cordata)
+mod_lm1 <- lm(concreteppi ~ year + cpi + unemploy + oilprice + gdp + population + cementprice, data = combinedata)
 
 summary(mod_lm1)
+
+mod_stan_glm1 <- stan_glm(concreteppi ~ year + cpi + unemploy + oilprice + gdp + population + cementprice, data = combinedata, refresh = FALSE, iter = 5000)
+
+
+# Predict concreteppi for the year 2050
+predicted_concreteppi <- predict(mod_stan_glm1, newdata = new_data)
+
+# View the predicted concreteppi for the year 2050
+print(predicted_concreteppi)
+
+summary(mod_stan_glm1)
 ```
 
 
@@ -299,7 +333,7 @@ better_smooth <- function(data, mapping, ptcol, ptalpha=1, ptsize=1, linecol, ..
 
 ```{r message=FALSE}
 p = GGally::ggpairs(
-  cordata[, c(1, 2:6)],
+  cordata[, c(1, 2:9)],
   lower = list(
     continuous = GGally::wrap(
       better_smooth,
@@ -313,7 +347,7 @@ p = GGally::ggpairs(
     )
   ),
   diag = list(continuous = GGally::wrap(
-    'densityDiag', color = 'gray50', lwd = .5
+    'densityDiag', color = 'red', lwd = .5
   )),
   # upper=list(continuous=GGally::wrap(better_corr)),
   axisLabels = "none"
@@ -321,9 +355,19 @@ p = GGally::ggpairs(
 
 p
 ```
-```
+
 
 ```{r}
-
+datagdp |>
+  ggplot(aes(x = years, y = gdp)) + 
+  geom_point() + 
+  scale_y_log10()
 ```
+
+
+
+
+
+
+
 

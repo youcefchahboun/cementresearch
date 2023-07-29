@@ -1,0 +1,100 @@
+---
+title: "yuhants"
+author: "Yuhan"
+date: "2023-07-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(forecast)
+library(ts)
+```
+
+```{r}
+combinedata
+
+ts_data <- ts(combinedata[, c("cpi", "unemploy", "gdp", "oilprice", 
+                              "cementprice", "population", "production")], 
+              start = combinedata$year[1], frequency = 1)
+
+model_factor1 <- auto.arima(ts_data[, "production"], seasonal = FALSE)
+
+
+model_factor1 <- arima(ts_data[, "production"], xreg = ts_data[, c("cpi", "unemploy", "oilprice", "gdp", "population", "cementprice")])
+
+forecast_factor1 <- forecast(model_factor1, h = 28) 
+
+plot(forecast_factor1) 
+```
+
+```{r}
+
+modelpred <- lm(Cement ~ cpi + unemploy + oilprice  + log(gdp) + log(cementprice) + 
+                  log(concreteppi) + population, 
+                data = combinedata)
+
+modelpred2 <- lm(log(Cement) ~ log(cpi) + log(unemploy) + log(oilprice)  + log(cementprice) + log(concreteppi), 
+                data = combinedata)
+  
+summary(modelpred)
+summary(modelpred2)
+```
+
+
+
+
+```{r}
+# Function to perform linear regression and check for multiplicative/additive relationship
+check_relationship <- function(x, y) {
+  additive_model <- lm(y ~ x)
+  multiplicative_model <- lm(log(y) ~ log(x))
+  
+  return(list(
+    additive = summary(additive_model),
+    multiplicative = summary(multiplicative_model)
+  ))
+}
+
+# Apply the function to each variable
+results_x1 <- check_relationship(combinedata$cpi, combinedata$Cement)
+results_x2 <- check_relationship(combinedata$unemploy, combinedata$Cement)
+results_x3 <- check_relationship(combinedata$gdp, combinedata$Cement)
+results_x4 <- check_relationship(combinedata$oilprice, combinedata$Cement)
+results_x5 <- check_relationship(combinedata$cementprice, combinedata$Cement)
+results_x6 <- check_relationship(combinedata$population, combinedata$Cement)
+results_x7 <- check_relationship(combinedata$concreteppi, combinedata$Cement)
+results_x8 <- check_relationship(combinedata$Clinker, combinedata$Cement)
+
+# Function to print results
+print_results <- function(var_name, results) {
+  cat("Variable:", var_name, "\n")
+  cat("Additive Model:\n")
+  print(results$additive)
+  cat("Multiplicative Model:\n")
+  print(results$multiplicative)
+  cat("\n")
+}
+
+# Print the results
+print_results("x1", results_x1) # cpi
+
+print_results("x2", results_x2) # unemploy
+
+print_results("x3", results_x3) # gdp
+
+print_results("x4", results_x4) # oilprice
+
+print_results("x5", results_x5) # cementprice
+
+print_results("x6", results_x6) # population
+
+print_results("x7", results_x7) # concreteppi
+
+print_results("x8", results_x8) # Clinker
+
+
+
+```
+
