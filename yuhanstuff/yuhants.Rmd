@@ -33,7 +33,7 @@ regressor_matrix <- cbind(regressor_concreteppi,
 
 
   # Replace with appropriate ARIMA(p, d, q) order based on model selection
-fit <-  Arima(regressor_Cement, xreg = regressor_matrix)
+fit <-  (regressor_Cement, xreg = regressor_matrix)
 
 horizon <- 100  # Replace with the number of steps you want to forecast ahead
 fut_concreteppi <- forecast(regressor_concreteppi, h = horizon)
