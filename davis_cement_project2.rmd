@@ -11,7 +11,7 @@ library(readxl)
 
 ```
 
-## Davis is Bald
+## yuhan is b
 
 ```{r}
 rawdata <- read_excel("data/USGS_Aggregates_Data-1971-2021.xlsx", sheet = "Complete_1971_2021")
@@ -31,5 +31,53 @@ rawdata |>
   ggplot(aes(x=Year,y=`Total Value`)) +
   geom_point()
 ```
+
+
+## Cement Emissions + FRED combination
+
+```{r}
+
+#Working with cement_emissions from https://doi.org/10.5194/essd-11-1675-2019
+
+cement_emissions <- read_csv("data/cement_emissions.csv",show_col_types = FALSE) 
+
+cement_emissions |> 
+  select("Year","USA") |>
+  filter(Year > 1924) |>
+  ggplot(aes(x=Year,y=USA)) +
+  geom_point()
+
+cement_emissions_USA <- select(cement_emissions, "Year", "USA")
+  
+#Working with FRED Data set (https://fred.stlouisfed.org/series/IPG3273S)
+
+FRED_Concrete_Prod_Index_Annaul <- read_csv("data/FRED_Industrial_Production_Index_Concrete_Cement_Annaul.csv",show_col_types = FALSE)
+
+FRED_Concrete_Prod_Index_Annaul <- FRED_Concrete_Prod_Index_Annaul[seq(1,51),]
+FRED_Concrete_Prod_Index_Annaul[,2] <- as.double(unlist(FRED_Concrete_Prod_Index_Annaul[,2]))
+
+FRED_Concrete_Prod_Index_Annaul |>
+  ggplot(aes(x = Year,y = Index)) + 
+  geom_point()
+
+FRED_Concrete_Prod_Index_Annaul$Year <- as.numeric(format(FRED_Concrete_Prod_Index_Annaul$Year,"%Y"))
+
+joined_emissions_FRED = full_join(cement_emissions_USA,FRED_Concrete_Prod_Index_Annaul,by = "Year")
+
+#Plotting
+
+joined_emissions_FRED |>
+  filter(Year >= 1972) |>
+  ggplot() +
+  geom_point(aes(x=Year,y = USA / Index)) +
+  xlab("Years (1972 - 2021)") + 
+  ylab("Emissions (Gt CO2) divided by Index") + 
+  ggtitle("Emissions divided by Industrial Production Index (FRED)")
+
+
+```
+
+##Joining Data 
+
 
 
