@@ -1,0 +1,113 @@
+---
+title: "testmarkov"
+author: "Yuhan"
+date: "2023-07-29"
+output: html_document
+---
+```{r}
+# Load required library (only needed for visualization)
+ # Run this line if you don't have 'igraph' installed
+library(igraph)
+
+# Step 1: Define the state space (in this example, we have 3 states: A, B, and C)
+state_space <- c("A", "B", "C")
+
+# Step 2: Define the transition probability matrix with row and column names
+transition_matrix <- matrix(c(
+  0.3, 0.5, 0.2,  # Probability of moving from A to A, A to B, A to C
+  0.1, 0.6, 0.3,  # Probability of moving from B to A, B to B, B to C
+  0.4, 0.3, 0.3   # Probability of moving from C to A, C to B, C to C
+), nrow = 3, byrow = TRUE, dimnames = list(state_space, state_space))
+
+# Step 3: Initialize the starting state (choose one of the states from the state space)
+initial_state <- "A"
+
+# Step 4: Simulate the Markov chain
+set.seed(123)  # Set a seed for reproducibility
+num_time_steps <- 100
+
+# Function to simulate the Markov chain
+simulate_markov_chain <- function(transition_matrix, state_space, initial_state, num_time_steps) {
+  states <- character(num_time_steps)  # Initialize a vector to store the states at each time step
+  current_state <- initial_state
+  
+  for (t in 1:num_time_steps) {
+    states[t] <- current_state
+    current_state <- sample(state_space, size = 1, prob = transition_matrix[current_state, ])
+  }
+  
+  return(states)
+}
+
+# Simulate the Markov chain
+result_states <- simulate_markov_chain(transition_matrix, state_space, initial_state, num_time_steps)
+
+# Print the resulting states
+print(result_states)
+
+# Visualize the Markov chain as a directed graph
+transition_graph <- graph_from_adjacency_matrix(transition_matrix, mode = "directed", weighted = TRUE)
+plot(transition_graph, layout = layout_in_circle(transition_graph), edge.label = round(E(transition_graph)$weight, 2))
+
+result_states |>
+  as_tibble()
+
+```
+```{r}
+# Load required libraries
+ # Run this line if you don't have 'ggplot2' installed
+library(ggplot2)
+
+# Step 1: Define the state space
+state_space <- c("Sunny", "Rainy")
+
+# Step 2: Define the transition probability matrix
+# The rows represent the current state, and the columns represent the next state.
+# Probabilities should sum up to 1 for each row.
+transition_matrix <- matrix(c(
+  0.8, 0.2,  # Probability of staying Sunny or transitioning to Rainy when the current state is Sunny
+  0.4, 0.6   # Probability of staying Rainy or transitioning to Sunny when the current state is Rainy
+), nrow = 2, byrow = TRUE, dimnames = list(state_space, state_space))
+
+# Step 3: Initialize the starting state
+initial_state <- "Sunny"
+
+# Step 4: Simulate the Markov chain and calculate probabilities
+set.seed(123)  # Set a seed for reproducibility
+num_time_steps <- 10
+
+# Function to simulate the Markov chain and calculate probabilities over time steps
+simulate_markov_chain <- function(transition_matrix, initial_state, num_time_steps) {
+  probabilities <- matrix(0, nrow = num_time_steps, ncol = ncol(transition_matrix))
+  probabilities[1, ] <- ifelse(state_space == initial_state, 1, 0)
+  
+  for (t in 2:num_time_steps) {
+    probabilities[t, ] <- probabilities[t - 1, ] %*% transition_matrix
+  }
+  
+  return(probabilities)
+}
+
+# Simulate the Markov chain and calculate probabilities
+probabilities_over_time <- simulate_markov_chain(transition_matrix, initial_state, num_time_steps)
+
+# Convert probabilities to a data frame for plotting
+time_steps <- 1:num_time_steps
+prob_data <- data.frame(
+  time_steps = time_steps,
+  Sunny = probabilities_over_time[, "Sunny"],
+  Rainy = probabilities_over_time[, "Rainy"]
+)
+
+# Step 5: Plot the line graph for probability over steps
+ggplot(prob_data, aes(x = time_steps)) +
+  geom_line(aes(y = Sunny, color = "Sunny")) +
+  geom_line(aes(y = Rainy, color = "Rainy")) +
+  scale_color_manual(values = c("Sunny" = "orange", "Rainy" = "blue")) +
+  labs(x = "Time Steps", y = "Probability", title = "Weather Prediction using Markov Chain") +
+  theme_minimal()
+
+
+
+```
+

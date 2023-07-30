@@ -9,30 +9,54 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(forecast)
-library(ts)
 ```
 
 ```{r}
 combinedata
 
 ts_data <- ts(combinedata[, c("cpi", "unemploy", "gdp", "oilprice", 
-                              "cementprice", "population", "production")], 
+                              "cementprice", "population", "concreteppi", "Cement", "Clinker")], 
               start = combinedata$year[1], frequency = 1)
 
-model_factor1 <- auto.arima(ts_data[, "production"], seasonal = FALSE)
+regressor_Cement <- ts(combinedata$Cement, start = combinedata$year[1], frequency = 1)
+
+regressor_concreteppi <- stats::lag(ts(combinedata$concreteppi, start = combinedata$year[1], frequency = 1),1)
+regressor_unemploy <- stats::lag(ts(combinedata$unemploy, start = combinedata$year[1], frequency = 1),1)
+regressor_cementprice <- stats::lag(ts(combinedata$cementprice, start = combinedata$year[1], frequency = 1),1)
+regressor_oilprice <- stats::lag(ts(combinedata$oilprice, start = combinedata$year[1], frequency = 1),1)
 
 
-model_factor1 <- arima(ts_data[, "production"], xreg = ts_data[, c("cpi", "unemploy", "oilprice", "gdp", "population", "cementprice")])
+regressor_matrix <- cbind(regressor_concreteppi, 
+                          regressor_unemploy, 
+                          regressor_cementprice, 
+                          regressor_oilprice)
 
-forecast_factor1 <- forecast(model_factor1, h = 28) 
 
-plot(forecast_factor1) 
+  # Replace with appropriate ARIMA(p, d, q) order based on model selection
+fit <-  Arima(regressor_Cement, xreg = regressor_matrix)
+
+horizon <- 100  # Replace with the number of steps you want to forecast ahead
+fut_concreteppi <- forecast(regressor_concreteppi, h = horizon)
+fut_unemploy <- forecast(regressor_unemploy, h = horizon)
+fut_cementprice <- forecast(regressor_cementprice, h = horizon)
+fut_oilprice <- forecast(regressor_oilprice, h = horizon)
+
+# Combine future regressors into a matrix with the same number of columns as regressor_matrix
+newxreg <- cbind(fut_concreteppi$mean, 
+                 fut_unemploy$mean, 
+                 fut_cementprice$mean, 
+                 fut_oilprice$mean)
+
+# Generate future forecasts using ARIMA model and newxreg
+forecast_result <- forecast(fit, xreg=newxreg)
+
+plot(forecast_result)
+
 ```
 
 ```{r}
 
-modelpred <- lm(Cement ~ cpi + unemploy + oilprice  + log(gdp) + log(cementprice) + 
-                  log(concreteppi) + population, 
+modelpred <- lm(Cement ~ cpi + unemploy + oilprice  + log(cementprice) + log(concreteppi), 
                 data = combinedata)
 
 modelpred2 <- lm(log(Cement) ~ log(cpi) + log(unemploy) + log(oilprice)  + log(cementprice) + log(concreteppi), 
