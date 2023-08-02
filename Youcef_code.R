@@ -1,3 +1,3 @@
 DAVIS IS SOOOO BALD
 
-# Yuhan is Not BALD
+# Yuhan is not BALD
