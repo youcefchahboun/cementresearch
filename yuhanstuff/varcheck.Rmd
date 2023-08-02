@@ -1,0 +1,42 @@
+---
+ytitle: "yuhanvar"
+output: html_document
+date: "2023-07-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(vars)
+library(mFilter)
+library(tseries)
+library(TSstudio)
+library(forecast)
+library(tidyverse)
+
+```
+
+```{r}
+dataraw <- read_csv("/Users/maxwu/Desktop/Rdata-science/cementresearch/yuhanstuff/combinedata.csv")
+```
+```{r}
+CPI <- ts(dataraw$cpi, start = combinedata$year[1], frequency = 1)
+UNEMPLOY <- ts(dataraw$unemploy, start = combinedata$year[1], frequency = 1)
+OILPRICE <- ts(dataraw$oilprice, start = combinedata$year[1], frequency = 1)
+CEMENTP <- ts(dataraw$cementprice, start = combinedata$year[1], frequency = 1)
+PPI <- ts(dataraw$concreteppi, start = combinedata$year[1], frequency = 1)
+
+CEMENT <- ts(dataraw$Cement, start = combinedata$year[1], frequency = 1)
+```
+
+```{r}
+autoplot(CPI)
+autoplot(UNEMPLOY)
+autoplot(OILPRICE)
+autoplot(PPI)
+
+autoplot(CEMENT)
+```
+```{r}
+combinedata
+```
+

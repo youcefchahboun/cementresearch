@@ -56,7 +56,7 @@ plot(forecast_result)
 
 ```{r}
 
-modelpred <- lm(Cement ~ cpi + unemploy + oilprice  + log(cementprice) + log(concreteppi), 
+modelpred <- lm(Cement ~ cpi + unemploy + oilprice  + cementprice + concreteppi, 
                 data = combinedata)
 
 modelpred2 <- lm(log(Cement) ~ log(cpi) + log(unemploy) + log(oilprice)  + log(cementprice) + log(concreteppi), 

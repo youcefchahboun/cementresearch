@@ -45,7 +45,7 @@ Y axis: Total number of construction/projects in that region for all years
 ```{r}
 
 #Import Datasets + Innitial Manipulation
-
+setwd("~/Desktop/Rdata-science/cementresearch")
 datacpi <- read_csv("data/cpi.csv") |>
    pivot_longer(cols = `1960`:`2022`, 
                names_to = "years",
@@ -104,13 +104,19 @@ cementclinker <- read.csv("data/cementclinker.csv") |>
   mutate(Cement = as.double(str_remove(Cement, ","))) |>
   mutate(Clinker = as.double(str_remove(Clinker, ","))) 
 
+housingcomplete <- read.csv("data/housingunit.csv") |>
+  mutate(year = `X1968`, housing = as.double(str_remove(`X1.319.80`, ","))) |>
+  filter(year >= 1998 & year < 2021) |>
+  select(year, housing)
+
+
 combinedata <- bind_cols(c(datacpi, dataunemploy, datagdp, dataoil, 
-                           datacement, popdata, cementprod, cementclinker)) |>
+                           datacement, popdata, cementprod, cementclinker, housingcomplete)) |>
   mutate(name = `Country Name...1`, year = `years...2`) |>
   select(name, year, cpi, unemploy, gdp, oilprice, 
-         cementprice, population, concreteppi, Cement, Clinker)
+         cementprice, population, concreteppi, Cement, Clinker, housing)
 
-
+write_csv(combinedata, "combinedata.csv")
 
 ```
 
