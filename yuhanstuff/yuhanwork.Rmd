@@ -154,7 +154,7 @@ combinedata <- bind_cols(c(datacpi, dataunemploy, datagdp, dataoil,
          cementppi, population, concreteid, Cement, 
          Clinker, housing, construction, lime, gasppi,
          petrocoal, workers, silica)
-
+setwd("~/Desktop/Rdata-science/cementresearch")
 write_csv(combinedata, "combinedata.csv")
 
 ```
