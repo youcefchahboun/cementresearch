@@ -12,6 +12,7 @@ library("Hmisc")
 library("PerformanceAnalytics")
 library(rstanarm)
 library(gam)
+library(flexplot)
 ```
 
 
@@ -120,6 +121,11 @@ limedata <- read.csv("data/lime.csv") |>
   mutate(year = as.double(Year), lime = as.double(str_remove(`Lime`, ","))) |>
   select(year, lime)
 
+setwd("~/Desktop/Rdata-science/cementresearch")
+silicadata <- read.csv("data/silica.csv") |>
+  mutate(year = as.double(Year), silica = as.double(str_remove(`Silica`, ","))) |>
+  select(year, silica)
+
 
 gasdata <- read.csv("data/gasppi.csv") |>
   mutate(year = as.double(str_sub(`DATE`, 0, 4)), gasppi = as.double(str_remove(`WPU0531`, ","))) |>
@@ -142,15 +148,19 @@ workersdata <- read.csv("data/workers.csv") |>
 combinedata <- bind_cols(c(datacpi, dataunemploy, datagdp, dataoil, 
                            datacement, popdata, cementprod, cementclinker, 
                            housingcomplete, constructspending, limedata, 
-                           gasdata, petrodata, workersdata)) |>
+                           gasdata, petrodata, workersdata, silicadata)) |>
   mutate(name = `Country Name...1`, year = `years...2`) |>
   select(name, year, cpi, unemploy, gdp, oilprice, 
          cementppi, population, concreteid, Cement, 
          Clinker, housing, construction, lime, gasppi,
-         petrocoal, workers)
+         petrocoal, workers, silica)
 
-# write_csv(combinedata, "combinedata.csv")
+write_csv(combinedata, "combinedata.csv")
 
+```
+
+```{r}
+flexplot(concreteid~cpi + unemploy, data=combinedata, method="lm")
 ```
 
 
