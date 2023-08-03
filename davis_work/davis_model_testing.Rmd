@@ -1,0 +1,105 @@
+```{r}
+library(tidyverse)
+library(vars)
+library(here)
+library(devtools)
+library(ggplot2)
+library(forecast)
+library(tseries)
+```
+
+## Loading the data set 
+
+```{r}
+combine_data <- read_csv(here("combinedata.csv"))
+
+# Test var (combine_test) will use only gdp, oil price, and cpi as ind var, and cement production as dep var
+
+df <- combine_data %>% dplyr::select("cpi", "gdp", "oilprice", "production")
+
+# convert var: combine_test into time series format
+
+# df <- ts(df, start = 1998, frequency = 1)
+
+gdp <- ts(df$gdp, start = 1998, frequency = 1)
+cpi <- ts(df$cpi, start = 1998, frequency = 1)
+oilprice <- ts(df$oilprice, start = 1998, frequency = 1)
+production <- ts(df$production, start = 1998, frequency = 1) #concrete or clinker production? Please find out
+dummy_var <- data.frame(year = 1998:2020) |> 
+  mutate(value = if_else(year == c(2008,2009),1,0))
+
+dummy_var <- ts(dummy_var$value,start = 1998, frequency = 1)
+rate
+
+five_vars <- cbind(gdp,cpi,oilprice,production,dummy_var)
+
+
+```
+
+## ACF/PACF Diagnosis
+
+```{r}
+par(mfrow = c(2, 4))
+acf(gdp)
+pacf(gdp)
+acf(cpi)
+pacf(cpi)
+acf(oilprice)
+pacf(oilprice)
+acf(production)
+pacf(production)
+
+
+lapply(cbind(gdp,cpi,oilprice,production,dummy_var),adf.test)
+
+
+
+```
+
+# Lag select
+```{r}
+lagselect <- VARselect(five_vars,lag.max = 3, type = "const")
+
+# lapply(cbind(gdp,cpi,oilprice,production),VARselect)
+lagselect #it looks like we should use a lag of 3
+
+Model_test <- VAR(five_vars, p = 3,type = "const", season = NULL)
+
+summary(Model_test$varresult$production)
+
+forecasts <- predict(Model_tes)
+plot(forecasts)
+
+past_and_fcst <- ts(c(df$production,forecasts$fcst$production[,1]),start = 1998, frequency = 1)
+
+past_and_fcst_lower <- ts(c(df$production,forecasts$fcst$production[,2]),start = 1998, frequency = 1)
+
+past_and_fcst_upper <- ts(c(df$production,forecasts$fcst$production[,3]),start = 1998, frequency = 1)
+
+
+tibble_fcst <-tibble(prediction = past_and_fcst, lower = past_and_fcst_lower, upper = past_and_fcst_upper)
+
+tibble_fcst |>
+  mutate(years = 1998:2030) |>
+  pivot_longer(cols = prediction:lower:upper,names_to = "type", values_to = "values") |>
+  mutate(past = if_else(years <= 2020, "past", type)) |>
+  ggplot(aes(x = years, y = values, color = past)) +
+  geom_line()
+```
+
+
+## Toying around example: https://bookdown.org/ccolonescu/RPoE4/vec-and-var-models.html#estimating-a-var-model 
+```{r}
+install_git("https://github.com/ccolonescu/PoEdata")
+data("fred", package="PoEdata")
+fred <- ts(fred, start=c(1960,1),end=c(2009,4),frequency=4)
+ts.plot(fred[,"c"],fred[,"y"], type="l", 
+        lty=c(1,2), col=c(1,2))
+legend("topleft", border=NULL, legend=c("c","y"), 
+       lty=c(1,2), col=c(1,2))
+
+Canada
+a <- VAR(Canada)
+
+```
+
