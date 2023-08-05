@@ -1,0 +1,25 @@
+head(mtcars)
+
+intercept_only <- lm(mpg ~ 1, data=mtcars)
+
+all <- lm(mpg ~ ., data=mtcars)
+
+
+forward <- step(intercept_only, direction='forward', scope=formula(all), trace=0)
+
+
+forward$anova
+
+forward$coefficients
+
+combinedata <- read_csv("data/combinedata.csv")
+
+head(combinedata)
+
+
+intercept_only2 <- lm(year ~ 1, data=combinedata)
+
+all2 <- lm(year ~ ., data=combinedata)
+
+forward2 <- step(intercept_only2, direction='forward', scope=formula(all2), trace=0)
+
